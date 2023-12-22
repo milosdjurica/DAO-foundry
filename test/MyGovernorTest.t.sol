@@ -93,5 +93,9 @@ contract MyGovernorTest is Test {
         console.log("Proposal state -> ", uint256(governor.state(proposalId)));
 
         // 4. Execute
+        governor.execute(targets, values, calldatas, descriptionHash);
+
+        console.log("Box value -> ", box.getNumber());
+        assert(box.getNumber() == valueToStore);
     }
 }
