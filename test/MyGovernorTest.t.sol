@@ -83,5 +83,15 @@ contract MyGovernorTest is Test {
         vm.roll(block.number + VOTING_PERIOD + 1);
 
         console.log("Proposal state -> ", uint256(governor.state(proposalId)));
+
+        // 3. Queue the TX
+        bytes32 descriptionHash = keccak256(abi.encodePacked(description));
+        governor.queue(targets, values, calldatas, descriptionHash);
+
+        vm.warp(block.timestamp + MIN_DELAY + 1);
+        vm.roll(block.number + MIN_DELAY + 1);
+        console.log("Proposal state -> ", uint256(governor.state(proposalId)));
+
+        // 4. Execute
     }
 }
