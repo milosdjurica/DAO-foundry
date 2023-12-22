@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {Test} from "../lib/forge-std/src/Test.sol";
+import {Test, console} from "../lib/forge-std/src/Test.sol";
 
 import {Box} from "../src/Box.sol";
 import {MyGovernor} from "../src/MyGovernor.sol";
@@ -23,7 +23,10 @@ contract MyGovernorTest is Test {
     bytes[] calldatas;
     address[] targets;
 
-    uint256 public constant MIN_DELAY = 3600;
+    uint256 public constant MIN_DELAY = 3600; // 1 hour -> after a vote passes
+    // ! MyGovernor.sol -> in constructor it is set up to 7200
+    uint256 public constant VOTING_DELAY = 7200; // how many blocks till the vote is active
+    uint256 public constant VOTING_PERIOD = 50400;
 
     function setUp() public {
         votingToken = new VotingToken();
@@ -59,5 +62,26 @@ contract MyGovernorTest is Test {
         values.push(0);
         calldatas.push(encodedFunctionCall);
         targets.push(address(box));
+
+        // 1. Propose to the DAO
+        uint256 proposalId = governor.propose(targets, values, calldatas, description);
+        // ! Can check values for state in IGovernor.sol
+        console.log("Proposal state -> ", uint256(governor.state(proposalId)));
+
+        vm.warp(block.timestamp + VOTING_DELAY + 1);
+        vm.roll(block.number + VOTING_DELAY + 1);
+        console.log("Proposal state -> ", uint256(governor.state(proposalId)));
+
+        // 2. Vote
+        string memory reason = "because i can";
+        // ! In GovernorCountingSimple.sol -> 0-Against, 1-For, 2-Abstain
+        uint8 voteWay = 1; // voting FOR
+
+        vm.prank(USER);
+        governor.castVoteWithReason(proposalId, voteWay, reason);
+        vm.warp(block.timestamp + VOTING_PERIOD + 1);
+        vm.roll(block.number + VOTING_PERIOD + 1);
+
+        console.log("Proposal state -> ", uint256(governor.state(proposalId)));
     }
 }
