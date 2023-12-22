@@ -19,6 +19,9 @@ contract MyGovernorTest is Test {
 
     address[] proposers;
     address[] executors;
+    uint256[] values;
+    bytes[] calldatas;
+    address[] targets;
 
     uint256 public constant MIN_DELAY = 3600;
 
@@ -47,5 +50,14 @@ contract MyGovernorTest is Test {
     function testCantUpdateBoxWithoutGovernance() public {
         vm.expectRevert();
         box.store(111);
+    }
+
+    function testGovernanceUpdatesBox() public {
+        uint256 valueToStore = 1111;
+        string memory description = "store 1111 in box";
+        bytes memory encodedFunctionCall = abi.encodeWithSignature("store(uint256)", valueToStore);
+        values.push(0);
+        calldatas.push(encodedFunctionCall);
+        targets.push(address(box));
     }
 }
